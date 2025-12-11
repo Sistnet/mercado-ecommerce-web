@@ -1,11 +1,12 @@
 'use client';
 
 /**
- * Home Page - Página inicial (raiz)
- * NOTA: Esta página é para acesso sem tenant (ex: em produção via subdomínio)
+ * Tenant Home Page - Página inicial com tenant dinâmico
+ * Acesso: http://localhost:3000/lojinhateste
  */
 
 import { useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Loader2 } from 'lucide-react';
@@ -25,7 +26,9 @@ import { ProductCard } from '@/components/features/products/product-card';
 import { MainLayout } from '@/components/layouts/main-layout';
 import { getImageUrl } from '@/lib/utils/image';
 
-export default function HomePage() {
+export default function TenantHomePage() {
+  const params = useParams();
+  const tenant = params.tenant as string;
   const dispatch = useAppDispatch();
 
   const { config, isLoading: configLoading, isInitialized: configInitialized } = useAppSelector((state) => state.config);
@@ -37,17 +40,18 @@ export default function HomePage() {
     dailyNeedsProducts,
     isLoading: productsLoading,
   } = useAppSelector((state) => state.products);
+  const { currentTenant, isResolved } = useAppSelector((state) => state.tenant);
 
-  // Primeiro: carregar config
+  // Primeiro: carregar config quando tenant estiver resolvido
   useEffect(() => {
-    if (!configInitialized && !configLoading) {
+    if (tenant && isResolved && currentTenant === tenant && !configInitialized && !configLoading) {
       dispatch(fetchConfig());
     }
-  }, [dispatch, configInitialized, configLoading]);
+  }, [dispatch, tenant, isResolved, currentTenant, configInitialized, configLoading]);
 
   // Segundo: carregar demais dados apenas após config estar disponível
   useEffect(() => {
-    if (configInitialized && config?.base_urls) {
+    if (tenant && isResolved && currentTenant === tenant && configInitialized && config?.base_urls) {
       dispatch(fetchBanners());
       dispatch(fetchFlashDeals({}));
       dispatch(fetchCategories());
@@ -55,7 +59,7 @@ export default function HomePage() {
       dispatch(fetchFeaturedProducts({}));
       dispatch(fetchDailyNeedsProducts({}));
     }
-  }, [dispatch, configInitialized, config?.base_urls]);
+  }, [dispatch, tenant, isResolved, currentTenant, configInitialized, config?.base_urls]);
 
   // Aguardar config antes de renderizar qualquer coisa com imagem
   if (configLoading || !configInitialized || !config?.base_urls) {
@@ -90,7 +94,7 @@ export default function HomePage() {
                   <div className="max-w-lg text-white space-y-4">
                     <h1 className="text-3xl md:text-5xl font-bold">{banners[0]?.title}</h1>
                     <Button size="lg" asChild>
-                      <Link href="/products">Ver Produtos</Link>
+                      <Link href={`/${tenant}/products`}>Ver Produtos</Link>
                     </Button>
                   </div>
                 </div>
@@ -103,8 +107,9 @@ export default function HomePage() {
                   Bem-vindo ao {config.ecommerce_name || 'Mercado'}
                 </h1>
                 <p className="text-lg opacity-90">Os melhores produtos você encontra aqui</p>
+                <p className="text-sm opacity-75">Tenant: {tenant}</p>
                 <Button size="lg" variant="secondary" asChild>
-                  <Link href="/products">Explorar Produtos</Link>
+                  <Link href={`/${tenant}/products`}>Explorar Produtos</Link>
                 </Button>
               </div>
             </div>
@@ -116,7 +121,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Categorias</h2>
             <Button variant="ghost" asChild>
-              <Link href="/categories" className="flex items-center">
+              <Link href={`/${tenant}/categories`} className="flex items-center">
                 Ver Todas <ChevronRight className="h-4 w-4 ml-1" />
               </Link>
             </Button>
@@ -131,7 +136,7 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {categories.slice(0, 6).map((category) => (
-                <Link key={category.id} href={`/categories/${category.id}`}>
+                <Link key={category.id} href={`/${tenant}/categories/${category.id}`}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                     <CardContent className="p-4 flex flex-col items-center justify-center text-center space-y-2">
                       {category.image ? (
@@ -161,7 +166,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Produtos em Destaque</h2>
               <Button variant="ghost" asChild>
-                <Link href="/products?filter=featured" className="flex items-center">
+                <Link href={`/${tenant}/products?filter=featured`} className="flex items-center">
                   Ver Todos <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
@@ -181,7 +186,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Necessidades Diárias</h2>
               <Button variant="ghost" asChild>
-                <Link href="/products?filter=daily-needs" className="flex items-center">
+                <Link href={`/${tenant}/products?filter=daily-needs`} className="flex items-center">
                   Ver Todos <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
@@ -200,7 +205,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Todos os Produtos</h2>
             <Button variant="ghost" asChild>
-              <Link href="/products" className="flex items-center">
+              <Link href={`/${tenant}/products`} className="flex items-center">
                 Ver Todos <ChevronRight className="h-4 w-4 ml-1" />
               </Link>
             </Button>
