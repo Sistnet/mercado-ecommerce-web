@@ -103,6 +103,10 @@ export const API_ENDPOINTS = {
 
   // Payment
   OFFLINE_PAYMENT_METHODS: '/api/v1/offline-payment-method/list',
+
+  // Assets / Signed URLs
+  // AIDEV-NOTE: Endpoint para obter URLs assinadas do GCS (requer autenticação)
+  ASSETS_SIGNED_URL: '/api/v1/assets/signed-url',
 } as const;
 
 export type ApiEndpoint = (typeof API_ENDPOINTS)[keyof typeof API_ENDPOINTS];

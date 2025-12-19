@@ -2,6 +2,16 @@
  * Config Types - Baseado em Flutter config_model.dart
  */
 
+// AIDEV-NOTE: Storage driver configuration from API
+export type StorageDriver = 'local' | 'gcs' | 'r2';
+
+export interface StorageConfig {
+  driver: StorageDriver;
+  use_signed_urls: boolean;
+  public_url: string | null;
+  path_prefix: string;
+}
+
 export interface AppConfig {
   ecommerce_name: string;
   ecommerce_logo: string;
@@ -12,6 +22,7 @@ export interface AppConfig {
   minimum_order_value: number;
   self_pickup: boolean;
   base_urls: BaseUrls;
+  storage?: StorageConfig;
   currency_symbol: string;
   delivery_charge: number;
   cash_on_delivery: boolean;
