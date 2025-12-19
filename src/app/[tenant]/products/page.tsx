@@ -206,17 +206,17 @@ export default function ProductsPage() {
 
       {/* Products Grid */}
       {productsLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 rounded-lg" />
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <Skeleton key={i} className="h-[200px] rounded-lg" />
           ))}
         </div>
       ) : sortedProducts.length > 0 ? (
         <div
           className={
             viewMode === 'grid'
-              ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'
-              : 'flex flex-col gap-4'
+              ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3'
+              : 'flex flex-col gap-3'
           }
         >
           {sortedProducts.map((product) => (

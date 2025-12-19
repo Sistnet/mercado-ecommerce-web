@@ -110,14 +110,14 @@ export function ProductCard({ product }: ProductCardProps) {
     <Link href={`${tenantPrefix}/products/${product.id}`}>
       <Card className="group h-full hover:shadow-lg transition-shadow overflow-hidden">
         <CardContent className="p-0">
-          {/* Image Container */}
-          <div className="relative aspect-square bg-muted overflow-hidden">
+          {/* Image Container - Compacto */}
+          <div className="relative h-[120px] sm:h-[140px] bg-muted overflow-hidden">
             <Image
               src={imageUrl}
               alt={product.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 16vw"
             />
 
             {/* Discount Badge */}
