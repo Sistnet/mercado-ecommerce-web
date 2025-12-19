@@ -1,10 +1,12 @@
 /**
  * Config Slice - Baseado em Flutter SplashProvider
+ * AIDEV-NOTE: Integrates with image.ts to set storage configuration
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { setStorageConfig } from '@/lib/utils/image';
 import type { AppConfig, ConfigState, DeliveryInfo } from '@/types/config.types';
 
 const initialState: ConfigState = {
@@ -64,6 +66,8 @@ const configSlice = createSlice({
         state.config = action.payload;
         state.isInitialized = true;
         state.error = null;
+        // AIDEV-NOTE: Set storage config for image URL building
+        setStorageConfig(action.payload.storage);
       })
       .addCase(fetchConfig.rejected, (state, action) => {
         state.isLoading = false;

@@ -4,6 +4,14 @@ const nextConfig = {
     // Desabilita otimização em desenvolvimento para evitar problemas com localhost
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
+      // CloudFlare R2 public buckets
+      {
+        protocol: 'https',
+        hostname: '*.r2.dev',
+        port: '',
+        pathname: '/**',
+      },
+      // Google Cloud Storage
       {
         protocol: 'https',
         hostname: 'storage.googleapis.com',
