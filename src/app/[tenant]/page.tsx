@@ -152,13 +152,16 @@ export default function TenantHomePage() {
                         </span>
                       </div>
                     )}
-                    {/* Hover Overlay with Name */}
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="text-white text-xs md:text-sm font-medium text-center px-2 line-clamp-2">
-                        {category.name}
-                      </span>
-                    </div>
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
+                  {/* Category Name - always visible */}
+                  <span
+                    className="mt-2 text-xs md:text-sm font-medium text-center max-w-[80px] md:max-w-[96px] leading-tight group-hover:text-primary transition-colors"
+                    title={category.name}
+                  >
+                    {category.name}
+                  </span>
                 </Link>
               ))}
             </div>

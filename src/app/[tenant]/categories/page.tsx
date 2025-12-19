@@ -109,9 +109,12 @@ export default function CategoriesPage() {
                 )}
 
                 {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="text-white text-sm font-medium px-4 text-center">
-                    Ver Produtos
+                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2">
+                  <span className="text-white text-[11px] font-medium text-center leading-tight break-words hyphens-auto">
+                    {category.name}
+                  </span>
+                  <span className="text-white/70 text-[9px] mt-1">
+                    Ver produtos →
                   </span>
                 </div>
 
@@ -124,7 +127,10 @@ export default function CategoriesPage() {
               </div>
 
               {/* Category Name */}
-              <h3 className="mt-3 text-sm font-medium text-center group-hover:text-primary transition-colors line-clamp-2">
+              <h3
+                className="mt-3 text-sm font-medium text-center group-hover:text-primary transition-colors line-clamp-2 max-w-[160px]"
+                title={category.name}
+              >
                 {category.name}
               </h3>
             </Link>
