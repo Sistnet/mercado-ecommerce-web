@@ -4,7 +4,7 @@
  * Product Detail Page - Layout minimalista e moderno
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -41,6 +41,12 @@ export default function ProductDetailPage() {
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
 
+  // Zoom/Lupa state
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [lensPosition, setLensPosition] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
   const { config, isLoading: configLoading, isInitialized: configInitialized } = useAppSelector(
     (state) => state.config
   );
@@ -52,6 +58,10 @@ export default function ProductDetailPage() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   const isInWishlist = product ? wishlistIds.includes(product.id) : false;
+
+  // Zoom lens size
+  const LENS_SIZE = 100;
+  const ZOOM_PANEL_SIZE = 350;
 
   useEffect(() => {
     if (tenant && isResolved && currentTenant === tenant && !configInitialized && !configLoading) {
@@ -67,6 +77,37 @@ export default function ProductDetailPage() {
       dispatch(clearSelectedProduct());
     };
   }, [dispatch, tenant, isResolved, currentTenant, configInitialized, productId]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current) return;
+
+    const rect = imageContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Limitar a lente dentro da imagem
+    const lensX = Math.max(LENS_SIZE / 2, Math.min(x, rect.width - LENS_SIZE / 2));
+    const lensY = Math.max(LENS_SIZE / 2, Math.min(y, rect.height - LENS_SIZE / 2));
+
+    // Posição da lente (canto superior esquerdo)
+    const lensLeft = lensX - LENS_SIZE / 2;
+    const lensTop = lensY - LENS_SIZE / 2;
+
+    setLensPosition({ x: lensLeft, y: lensTop });
+
+    // Calcular a posição do background para o zoom
+    // A razão entre o painel de zoom e a lente determina a ampliação
+    const zoomRatio = ZOOM_PANEL_SIZE / LENS_SIZE;
+
+    // Posição do background = posição da lente * razão de zoom (negativo para mover na direção correta)
+    const bgX = lensLeft * zoomRatio;
+    const bgY = lensTop * zoomRatio;
+
+    setZoomPosition({ x: bgX, y: bgY });
+  };
+
+  const handleMouseEnter = () => setIsZooming(true);
+  const handleMouseLeave = () => setIsZooming(false);
 
   const calculatePrice = () => {
     if (!product) return { original: 0, discounted: 0, hasDiscount: false };
@@ -179,6 +220,7 @@ export default function ProductDetailPage() {
 
   const images = product.image || [];
   const currentImage = images[selectedImageIndex] || images[0];
+  const imageUrl = getImageUrl(config.base_urls, 'product', currentImage, { tenant });
 
   return (
     <div className="container max-w-5xl py-6">
@@ -193,21 +235,65 @@ export default function ProductDetailPage() {
 
       {/* Main Content */}
       <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
-        {/* Image Section - Compact */}
+        {/* Image Section */}
         <div className="w-full md:w-[320px] lg:w-[380px] flex-shrink-0">
-          {/* Main Image */}
-          <div className="relative aspect-square bg-muted/30 rounded-2xl overflow-hidden border">
-            <Image
-              src={getImageUrl(config.base_urls, 'product', currentImage, { tenant })}
-              alt={product.name}
-              fill
-              className="object-contain p-4"
-              priority
-            />
-            {product.discount > 0 && (
-              <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-500 text-white font-semibold">
-                -{product.discountType === 'percent' ? `${product.discount}%` : formatPrice(product.discount)}
-              </Badge>
+          {/* Main Image with Zoom */}
+          <div className="relative">
+            <div
+              ref={imageContainerRef}
+              className="relative aspect-square bg-muted/30 rounded-2xl overflow-hidden border cursor-zoom-in"
+              onMouseMove={handleMouseMove}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Image
+                src={imageUrl}
+                alt={product.name}
+                fill
+                className="object-contain p-4"
+                priority
+              />
+
+              {/* Lens/Lupa */}
+              {isZooming && (
+                <div
+                  className="absolute border-2 border-primary/70 bg-white/20 pointer-events-none z-10"
+                  style={{
+                    width: LENS_SIZE,
+                    height: LENS_SIZE,
+                    left: lensPosition.x,
+                    top: lensPosition.y,
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
+                  }}
+                />
+              )}
+
+              {product.discount > 0 && (
+                <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-500 text-white font-semibold z-20">
+                  -{product.discountType === 'percent' ? `${product.discount}%` : formatPrice(product.discount)}
+                </Badge>
+              )}
+            </div>
+
+            {/* Zoom Preview Panel */}
+            {isZooming && imageContainerRef.current && (
+              <div
+                className="hidden md:block absolute left-full top-0 ml-4 border-2 border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl z-30"
+                style={{
+                  width: ZOOM_PANEL_SIZE,
+                  height: ZOOM_PANEL_SIZE,
+                }}
+              >
+                <div
+                  className="w-full h-full"
+                  style={{
+                    backgroundImage: `url(${imageUrl})`,
+                    backgroundSize: `${imageContainerRef.current.offsetWidth * (ZOOM_PANEL_SIZE / LENS_SIZE)}px ${imageContainerRef.current.offsetHeight * (ZOOM_PANEL_SIZE / LENS_SIZE)}px`,
+                    backgroundPosition: `-${zoomPosition.x}px -${zoomPosition.y}px`,
+                    backgroundRepeat: 'no-repeat',
+                  }}
+                />
+              </div>
             )}
           </div>
 
