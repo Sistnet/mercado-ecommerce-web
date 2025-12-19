@@ -54,8 +54,19 @@ export const fetchSubCategories = createAsyncThunk(
   'categories/fetchSubCategories',
   async (categoryId: number, { rejectWithValue }) => {
     try {
-      const response = await api.get<Category[]>(`${API_ENDPOINTS.CATEGORY_CHILDREN}/${categoryId}`);
-      return response.data;
+      const response = await api.get<Category[] | { data?: Category[] }>(`${API_ENDPOINTS.CATEGORY_CHILDREN}/${categoryId}`);
+
+      // AIDEV-NOTE: A API pode retornar array diretamente ou objeto com data
+      let subCategories: Category[];
+      if (Array.isArray(response.data)) {
+        subCategories = response.data;
+      } else if (response.data && 'data' in response.data) {
+        subCategories = response.data.data || [];
+      } else {
+        subCategories = [];
+      }
+
+      return subCategories;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { errors?: Array<{ message: string }> } } };
       return rejectWithValue(err.response?.data?.errors?.[0]?.message || 'Failed to fetch subcategories');
@@ -63,17 +74,41 @@ export const fetchSubCategories = createAsyncThunk(
   }
 );
 
+// Interface para resposta de produtos da categoria
+interface CategoryProductsResponse {
+  products?: Product[];
+  data?: Product[];
+  total_size?: number;
+  limit?: number;
+  offset?: number;
+}
+
 export const fetchCategoryProducts = createAsyncThunk(
   'categories/fetchCategoryProducts',
   async (params: { categoryId: number; offset?: number; limit?: number }, { rejectWithValue }) => {
     try {
       const { categoryId, offset = 0, limit = 10 } = params;
-      const response = await api.get<ProductModel>(
+      const response = await api.get<Product[] | CategoryProductsResponse>(
         `${API_ENDPOINTS.CATEGORY_PRODUCTS}/${categoryId}?limit=${limit}&offset=${offset}`
       );
-      return response.data.products;
+
+      // AIDEV-NOTE: A API pode retornar array diretamente ou objeto com products/data
+      let products: Product[];
+      if (Array.isArray(response.data)) {
+        products = response.data;
+      } else if (response.data && 'products' in response.data) {
+        products = response.data.products || [];
+      } else if (response.data && 'data' in response.data) {
+        products = response.data.data || [];
+      } else {
+        products = [];
+      }
+
+      console.log('[Categories] Fetched products for category:', categoryId, 'count:', products.length);
+      return products;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { errors?: Array<{ message: string }> } } };
+      console.error('[Categories] Error fetching products:', err);
       return rejectWithValue(err.response?.data?.errors?.[0]?.message || 'Failed to fetch category products');
     }
   }
