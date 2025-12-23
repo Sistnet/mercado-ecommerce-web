@@ -38,6 +38,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80';
 // AIDEV-NOTE: When set, all cloud storage images are served through this CDN
 const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || '';
 
+// AIDEV-NOTE: Product image path prefix (Amazon/ML style)
+// URL pattern: {base_url}/img/p/{publicId}/{index}.{ext}
+const PRODUCT_IMAGE_PREFIX = 'p';
+
 // Cache da configuração de storage
 let cachedStorageConfig: StorageConfig | null = null;
 
@@ -355,4 +359,89 @@ export function usesPublicUrls(): boolean {
  */
 export function usesSignedUrls(): boolean {
   return cachedStorageConfig?.driver === 'gcs' && cachedStorageConfig?.use_signed_urls === true;
+}
+
+/**
+ * Build product image URL using publicId (Amazon/ML style)
+ *
+ * AIDEV-NOTE: New URL pattern that doesn't expose tenant name
+ * URL pattern: {base_url}/img/p/{publicId}/{index}.{ext}
+ * Example: https://pub-xxx.r2.dev/img/p/01kcvqtfyrnva3akzytn3vyrz3/0.jpg
+ *
+ * @param publicId - Product's public_id (ULID)
+ * @param indexOrFilename - Image index (0, 1, 2) or filename ("0.jpg")
+ * @param options - Storage config options
+ * @returns Full image URL
+ */
+export function getProductImageUrl(
+  publicId: string | undefined | null,
+  indexOrFilename: number | string,
+  options?: { storageConfig?: StorageConfig | null }
+): string {
+  if (!publicId) {
+    return PLACEHOLDER_IMAGE;
+  }
+
+  const storage = options?.storageConfig ?? cachedStorageConfig;
+  const pathPrefix = storage?.path_prefix || 'img';
+
+  // Convert index to filename if needed
+  const filename = typeof indexOrFilename === 'number'
+    ? `${indexOrFilename}.jpg`
+    : indexOrFilename;
+
+  // Build the path: p/{publicId}/{filename}
+  const imagePath = `${PRODUCT_IMAGE_PREFIX}/${publicId}/${filename}`;
+
+  // CDN has priority
+  if (CDN_URL) {
+    const baseUrl = CDN_URL.endsWith('/') ? CDN_URL.slice(0, -1) : CDN_URL;
+    return `${baseUrl}/${pathPrefix}/${imagePath}`;
+  }
+
+  // R2 public URL
+  if (storage?.driver === 'r2' && storage.public_url) {
+    return `${storage.public_url}/${pathPrefix}/${imagePath}`;
+  }
+
+  // Fallback to proxy (for local/GCS)
+  return `${API_BASE_URL}/storage/${pathPrefix}/${imagePath}`;
+}
+
+/**
+ * Get all product image URLs from the image array
+ *
+ * AIDEV-NOTE: Handles both legacy filenames and new index-based format
+ *
+ * @param publicId - Product's public_id (ULID)
+ * @param images - Array of image filenames or indices
+ * @param options - Storage config options
+ * @returns Array of full image URLs
+ */
+export function getProductImageUrls(
+  publicId: string | undefined | null,
+  images: (string | number)[] | undefined | null,
+  options?: { storageConfig?: StorageConfig | null }
+): string[] {
+  if (!publicId || !images || images.length === 0) {
+    return [PLACEHOLDER_IMAGE];
+  }
+
+  return images.map((img, index) => {
+    // If it's a legacy filename (contains date pattern), use index-based URL
+    if (typeof img === 'string' && img.match(/^\d{4}-\d{2}-\d{2}-/)) {
+      // Legacy filename - use index as the new filename
+      return getProductImageUrl(publicId, index, options);
+    }
+    return getProductImageUrl(publicId, img, options);
+  });
+}
+
+/**
+ * Check if an image array uses legacy filenames
+ */
+export function usesLegacyImageFormat(images: (string | number)[] | undefined | null): boolean {
+  if (!images || images.length === 0) return false;
+  const firstImage = images[0];
+  return typeof firstImage === 'string' && firstImage.match(/^\d{4}-\d{2}-\d{2}-/) !== null;
 }

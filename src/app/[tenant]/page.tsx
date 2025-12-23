@@ -69,48 +69,50 @@ export default function TenantHomePage() {
   }
 
   return (
-    <div className="container space-y-12 pb-12">
-        {/* Banner Section */}
-        <section className="relative">
-          {bannersLoading ? (
-            <Skeleton className="w-full h-[300px] md:h-[400px]" />
-          ) : banners.length > 0 ? (
-            <div className="relative w-full h-[300px] md:h-[400px] bg-muted rounded-lg overflow-hidden">
-              <Image
-                src={getImageUrl(config.base_urls, 'banner', banners[0]?.image, { tenant })}
-                alt={banners[0]?.title || 'Banner'}
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-              <div className="absolute inset-0 flex items-center">
-                <div className="container">
-                  <div className="max-w-lg text-white space-y-4">
-                    <h1 className="text-3xl md:text-5xl font-bold">{banners[0]?.title}</h1>
-                    <Button size="lg" asChild>
-                      <Link href={`/${tenant}/products`}>Ver Produtos</Link>
-                    </Button>
-                  </div>
+    <>
+      {/* Banner Section - AIDEV-NOTE: Full width without container margins */}
+      <section className="relative w-full">
+        {bannersLoading ? (
+          <Skeleton className="w-full h-[300px] md:h-[400px]" />
+        ) : banners.length > 0 ? (
+          <div className="relative w-full h-[300px] md:h-[400px] bg-muted overflow-hidden">
+            <Image
+              src={getImageUrl(config.base_urls, 'banner', banners[0]?.image, { tenant })}
+              alt={banners[0]?.title || 'Banner'}
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+            <div className="absolute inset-0 flex items-center">
+              <div className="container">
+                <div className="max-w-lg text-white space-y-4">
+                  <h1 className="text-3xl md:text-5xl font-bold">{banners[0]?.title}</h1>
+                  <Button size="lg" asChild>
+                    <Link href={`/${tenant}/products`}>Ver Produtos</Link>
+                  </Button>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="w-full h-[300px] md:h-[400px] bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-              <div className="text-center text-primary-foreground space-y-4">
-                <h1 className="text-3xl md:text-5xl font-bold">
-                  Bem-vindo ao {config.ecommerce_name || 'Mercado'}
-                </h1>
-                <p className="text-lg opacity-90">Os melhores produtos você encontra aqui</p>
-                <p className="text-sm opacity-75">Tenant: {tenant}</p>
-                <Button size="lg" variant="secondary" asChild>
-                  <Link href={`/${tenant}/products`}>Explorar Produtos</Link>
-                </Button>
-              </div>
+          </div>
+        ) : (
+          <div className="w-full h-[300px] md:h-[400px] bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
+            <div className="text-center text-primary-foreground space-y-4">
+              <h1 className="text-3xl md:text-5xl font-bold">
+                Bem-vindo ao {config.ecommerce_name || 'Mercado'}
+              </h1>
+              <p className="text-lg opacity-90">Os melhores produtos você encontra aqui</p>
+              <p className="text-sm opacity-75">Tenant: {tenant}</p>
+              <Button size="lg" variant="secondary" asChild>
+                <Link href={`/${tenant}/products`}>Explorar Produtos</Link>
+              </Button>
             </div>
-          )}
-        </section>
+          </div>
+        )}
+      </section>
 
+      {/* Rest of content with container */}
+      <div className="container space-y-12 pb-12 mt-12">
         {/* Categories Section */}
         <section>
           <div className="flex items-center justify-between mb-6">
@@ -234,5 +236,6 @@ export default function TenantHomePage() {
           )}
         </section>
       </div>
+    </>
   );
 }

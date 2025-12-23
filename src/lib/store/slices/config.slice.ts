@@ -1,12 +1,14 @@
 /**
  * Config Slice - Baseado em Flutter SplashProvider
  * AIDEV-NOTE: Integrates with image.ts to set storage configuration
+ * AIDEV-NOTE: Integrates with branding.ts to apply white-label customization
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { setStorageConfig } from '@/lib/utils/image';
+import { applyBranding } from '@/lib/utils/branding';
 import type { AppConfig, ConfigState, DeliveryInfo } from '@/types/config.types';
 
 const initialState: ConfigState = {
@@ -68,6 +70,8 @@ const configSlice = createSlice({
         state.error = null;
         // AIDEV-NOTE: Set storage config for image URL building
         setStorageConfig(action.payload.storage);
+        // AIDEV-NOTE: Apply tenant branding (colors, favicon) for white-label customization
+        applyBranding(action.payload.branding);
       })
       .addCase(fetchConfig.rejected, (state, action) => {
         state.isLoading = false;

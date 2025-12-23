@@ -4,6 +4,9 @@
 
 export interface Product {
   id: number;
+  // Canonical URL fields (Amazon/Mercado Livre style)
+  publicId?: string;    // ULID - stable identifier for URLs
+  slug?: string;        // SEO-friendly slug from name
   name: string;
   description: string;
   image: string[];

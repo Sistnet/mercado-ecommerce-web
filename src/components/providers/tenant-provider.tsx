@@ -28,15 +28,14 @@ export function TenantProvider({ children }: TenantProviderProps) {
     if (tenant && tenant !== currentTenant) {
       dispatch(setTenant(tenant));
     }
-  }, [dispatch, tenant, currentTenant]);
-
-  // Também define no localStorage de forma síncrona na primeira renderização
-  if (typeof window !== 'undefined' && tenant) {
-    const storedTenant = localStorage.getItem('current_tenant');
-    if (storedTenant !== tenant) {
-      localStorage.setItem('current_tenant', tenant);
+    // AIDEV-NOTE: localStorage must be set inside useEffect to avoid hydration mismatch
+    if (tenant) {
+      const storedTenant = localStorage.getItem('current_tenant');
+      if (storedTenant !== tenant) {
+        localStorage.setItem('current_tenant', tenant);
+      }
     }
-  }
+  }, [dispatch, tenant, currentTenant]);
 
   return <>{children}</>;
 }

@@ -124,9 +124,16 @@ export const fetchMostReviewedProducts = createAsyncThunk(
   }
 );
 
+/**
+ * Fetch product details by ID or publicId
+ *
+ * AIDEV-NOTE: Supports both numeric ID and publicId (ULID format) for canonical URLs
+ * - number: Legacy numeric ID
+ * - string: publicId (ULID format - 26 chars)
+ */
 export const fetchProductDetails = createAsyncThunk(
   'products/fetchProductDetails',
-  async (productId: number, { rejectWithValue }) => {
+  async (productId: number | string, { rejectWithValue }) => {
     try {
       const response = await api.get<Product>(
         `${API_ENDPOINTS.PRODUCT_DETAILS}/${productId}`

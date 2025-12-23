@@ -6,6 +6,7 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAppSelector } from '@/lib/store/hooks';
 
 interface AuthLayoutProps {
@@ -15,11 +16,14 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+  const pathname = usePathname();
   const { config } = useAppSelector((state) => state.config);
   const { currentTenant } = useAppSelector((state) => state.tenant);
 
-  // AIDEV-NOTE: Prefixo de tenant para todas as rotas internas
-  const tenantPrefix = currentTenant ? `/${currentTenant}` : '';
+  // AIDEV-NOTE: Extract tenant from pathname to avoid hydration mismatch
+  const tenantFromPath = pathname?.split('/')[1] || '';
+  const resolvedTenant = currentTenant || tenantFromPath;
+  const tenantPrefix = resolvedTenant ? `/${resolvedTenant}` : '';
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">

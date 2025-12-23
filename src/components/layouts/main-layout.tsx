@@ -38,6 +38,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
 import { logout } from '@/lib/store/slices/auth.slice';
+import Image from 'next/image';
+import { getImageUrl } from '@/lib/utils/image';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -60,8 +62,11 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { currentTenant } = useAppSelector((state) => state.tenant);
   const { categories } = useAppSelector((state) => state.categories);
 
-  // AIDEV-NOTE: Prefixo de tenant para todas as rotas internas
-  const tenantPrefix = currentTenant ? `/${currentTenant}` : '';
+  // AIDEV-NOTE: Extract tenant from pathname to avoid hydration mismatch
+  // pathname format: /tenant/... - first segment after / is the tenant
+  const tenantFromPath = pathname?.split('/')[1] || '';
+  const resolvedTenant = currentTenant || tenantFromPath;
+  const tenantPrefix = resolvedTenant ? `/${resolvedTenant}` : '';
 
   const handleLogout = () => {
     dispatch(logout());
@@ -122,14 +127,26 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header - AIDEV-NOTE: h-28 (112px) to accommodate larger logo */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          {/* Logo */}
+        <div className="container flex h-28 items-center justify-between">
+          {/* Logo - AIDEV-NOTE: Uses branding logo_url if available, otherwise ecommerce_logo */}
+          {/* AIDEV-NOTE: Logo size doubled to h-24 (96px) for maximum visibility */}
           <Link href={`${tenantPrefix}/`} className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">
-              {config?.ecommerce_name || 'Mercado'}
-            </span>
+            {(config?.branding?.logo_url || config?.ecommerce_logo) ? (
+              <Image
+                src={config?.branding?.logo_url || getImageUrl(config?.base_urls, 'ecommerce', config?.ecommerce_logo || '')}
+                alt={config?.branding?.tenant_name || config?.ecommerce_name || 'Logo'}
+                width={280}
+                height={96}
+                className="h-24 w-auto object-contain"
+                priority
+              />
+            ) : (
+              <span className="text-2xl font-bold text-primary">
+                {config?.branding?.tenant_name || config?.ecommerce_name || 'Mercado'}
+              </span>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

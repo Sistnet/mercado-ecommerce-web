@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,13 +39,16 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { isLoading, error, guestId } = useAppSelector((state) => state.auth);
   const { config } = useAppSelector((state) => state.config);
   const { currentTenant } = useAppSelector((state) => state.tenant);
 
-  // AIDEV-NOTE: Prefixo de tenant para todas as rotas internas
-  const tenantPrefix = currentTenant ? `/${currentTenant}` : '';
+  // AIDEV-NOTE: Extract tenant from pathname to avoid hydration mismatch
+  const tenantFromPath = pathname?.split('/')[1] || '';
+  const resolvedTenant = currentTenant || tenantFromPath;
+  const tenantPrefix = resolvedTenant ? `/${resolvedTenant}` : '';
 
   const [showPassword, setShowPassword] = useState(false);
 

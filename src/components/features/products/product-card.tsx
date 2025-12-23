@@ -6,6 +6,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,21 +16,24 @@ import { addToCart } from '@/lib/store/slices/cart.slice';
 import { addToWishlist, removeFromWishlist } from '@/lib/store/slices/wishlist.slice';
 import type { Product } from '@/types/product.types';
 import { toast } from 'sonner';
-import { getImageUrl } from '@/lib/utils/image';
+import { getImageUrl, getProductImageUrl } from '@/lib/utils/image';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { config } = useAppSelector((state) => state.config);
   const { currentTenant } = useAppSelector((state) => state.tenant);
   const { productIds: wishlistIds } = useAppSelector((state) => state.wishlist);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // AIDEV-NOTE: Prefixo de tenant para todas as rotas internas
-  const tenantPrefix = currentTenant ? `/${currentTenant}` : '';
+  // AIDEV-NOTE: Extract tenant from pathname to avoid hydration mismatch
+  const tenantFromPath = pathname?.split('/')[1] || '';
+  const resolvedTenant = currentTenant || tenantFromPath;
+  const tenantPrefix = resolvedTenant ? `/${resolvedTenant}` : '';
 
   const isInWishlist = wishlistIds.includes(product.id);
 
@@ -96,7 +100,18 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
-  const imageUrl = getImageUrl(config?.base_urls, 'product', product.image?.[0], { tenant: currentTenant || undefined });
+  // AIDEV-NOTE: Determine image URL based on format
+  // - New format (0.jpg, 1.jpg): use publicId-based path (img/p/{publicId}/{filename})
+  // - Legacy format (2025-xx-xx-xxx.jpg): use tenant-based path (img/tenants/{tenant}/product/{filename})
+  const firstImage = product.image?.[0];
+  const isNewFormat = firstImage && /^\d+\.\w+$/.test(firstImage);
+
+  const imageUrl = isNewFormat && product.publicId
+    ? getProductImageUrl(product.publicId, firstImage, { storageConfig: config?.storage })
+    : getImageUrl(config?.base_urls, 'product', firstImage, {
+        tenant: currentTenant || undefined,
+        storageConfig: config?.storage,
+      });
 
   const formatPrice = (price: number) => {
     const symbol = config?.currency_symbol || 'R$';
@@ -106,12 +121,21 @@ export function ProductCard({ product }: ProductCardProps) {
     return position === 'left' ? `${symbol} ${formatted}` : `${formatted} ${symbol}`;
   };
 
+  // AIDEV-NOTE: Build product URL - use canonical format if publicId available, fallback to legacy
+  const productUrl = product.publicId && product.slug
+    ? `${tenantPrefix}/p/${product.publicId}/${product.slug}`
+    : `${tenantPrefix}/products/${product.id}`;
+
   return (
-    <Link href={`${tenantPrefix}/products/${product.id}`}>
+    <Link href={productUrl}>
       <Card className="group h-full hover:shadow-lg transition-shadow overflow-hidden">
         <CardContent className="p-0">
           {/* Image Container - Compacto */}
-          <div className="relative h-[120px] sm:h-[140px] bg-muted overflow-hidden">
+          {/* AIDEV-NOTE: Uses custom --product-card-bg variable for branding, falls back to muted */}
+          <div
+            className="relative h-[120px] sm:h-[140px] overflow-hidden"
+            style={{ backgroundColor: 'var(--product-card-bg, var(--muted))' }}
+          >
             <Image
               src={imageUrl}
               alt={product.name}

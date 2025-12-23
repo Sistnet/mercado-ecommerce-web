@@ -12,6 +12,17 @@ export interface StorageConfig {
   path_prefix: string;
 }
 
+// AIDEV-NOTE: White-label branding configuration from tenant settings
+export interface BrandingConfig {
+  tenant_name: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  background_color: string | null;
+  card_background_color: string | null;
+  logo_url: string | null;
+  favicon_url: string | null;
+}
+
 export interface AppConfig {
   ecommerce_name: string;
   ecommerce_logo: string;
@@ -59,6 +70,8 @@ export interface AppConfig {
   free_delivery_over_amount: number;
   free_delivery_status: boolean;
   social_media_link: SocialMediaLink[];
+  // AIDEV-NOTE: White-label branding for tenant customization
+  branding?: BrandingConfig;
 }
 
 export interface LocationCoverage {
