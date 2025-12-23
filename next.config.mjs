@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // AIDEV-NOTE: Allow cross-origin requests from local network IPs
+  // Format: hostname only (no protocol)
+  allowedDevOrigins: [
+    '192.168.0.5',
+    '192.168.0.1',
+    '192.168.1.1',
+  ],
   images: {
     // Desabilita otimização em desenvolvimento para evitar problemas com localhost
     unoptimized: process.env.NODE_ENV === 'development',
